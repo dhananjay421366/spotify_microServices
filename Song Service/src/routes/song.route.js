@@ -8,8 +8,8 @@ import {
 
 const router = Router();
 router.get("/album/all", getAllAlbums);
-router.get("/song/all", getAllSongs);
+router.get("/all", getAllSongs);
 router.get("/album/:id", getAllSongsOfAlbum);
-router.get("/song/:id", getSingleSong);
+router.get("/:id", getSingleSong);
 
 export default router;

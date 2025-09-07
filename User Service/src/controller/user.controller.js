@@ -80,18 +80,8 @@ export const Login = asyncHandler(async (req, res) => {
   // store JWT in cookie
   res.cookie("token", token, {
     httpOnly: true,
-    secure: true,
-    sameSite: "strict",
     maxAge: 60 * 60 * 1000, // 1 hour
   });
-
-  // store token also in session
-  req.session.user = {
-    _id: user._id,
-    email: user.email,
-    role: user.role,
-    token,
-  };
 
   return res.status(200).json({
     message:
@@ -104,7 +94,6 @@ export const Login = asyncHandler(async (req, res) => {
   });
 });
 
-
 export const getProfile = asyncHandler(async (req, res) => {
   const user = req.user;
   return res.status(200).json({
@@ -115,33 +104,20 @@ export const getProfile = asyncHandler(async (req, res) => {
 
 // logout
 export const Logout = asyncHandler(async (req, res) => {
-  // 1. Destroy the session
-  req.session.destroy((err) => {
-    if (err) {
-      console.error("Error destroying session:", err);
-      return res
-        .status(500)
-        .json({ error: "Could not log out, please try again" });
-    }
 
-    // 2. Clear the session cookie
-    res.clearCookie("connect.sid"); // session cookie
-
-    // 3. Clear JWT cookie
+    // 1. Clear JWT cookie
     res.clearCookie("token"); // JWT cookie
 
     return res.status(200).json({ message: "Logged out successfully" });
   });
-});
 
-// addToPlaylist
+
+// ✅ Toggle Add / Remove playlist item
 export const addToPlaylist = asyncHandler(async (req, res) => {
-  const userId = req.session?.user?._id || req.user?._id; // session OR JWT
+  const userId = req.user?._id;
 
   if (!userId) {
-    return res.status(401).json({
-      error: "Unauthorized - no token or session",
-    });
+    return res.status(401).json({ error: "Unauthorized - no token or session" });
   }
 
   const user = await User.findById(new mongoose.Types.ObjectId(userId));
@@ -153,11 +129,29 @@ export const addToPlaylist = asyncHandler(async (req, res) => {
   if (user.playList.includes(req.params.id)) {
     user.playList = user.playList.filter((item) => item !== req.params.id);
     await user.save();
-    return res.json({ message: "Removed from playlist" });
+    return res.json({ message: "Removed from playlist", isBookmarked: false });
   }
 
   user.playList.push(req.params.id);
   await user.save();
 
-  res.status(200).json({ message: "Added to playlist" });
+  res.status(200).json({ message: "Added to playlist", isBookmarked: true });
+});
+
+// ✅ Check bookmark status (for reload)
+export const checkBookmarkStatus = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  if (!userId) {
+    return res.status(401).json({ error: "Unauthorized - no token or session" });
+  }
+
+  const user = await User.findById(userId).select("playList");
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  const isBookmarked = user.playList.includes(req.params.id);
+
+  res.status(200).json({ isBookmarked });
 });

@@ -24,7 +24,9 @@ export const getAllAlbums = asyncHandler(async (req, res) => {
   albums = await sql`SELECT * FROM albums`;
 
   if (redisClient.isReady) {
-    await redisClient.set("albums", JSON.stringify(albums), { EX: CACHE_EXPIRY });
+    await redisClient.set("albums", JSON.stringify(albums), {
+      EX: CACHE_EXPIRY,
+    });
   }
 
   res.status(200).json({
@@ -95,7 +97,9 @@ export const getAllSongsOfAlbum = asyncHandler(async (req, res) => {
   const response = { album: album[0], songs };
 
   if (redisClient.isReady) {
-    await redisClient.set(`album_songs_${id}`, JSON.stringify(response), { EX: CACHE_EXPIRY });
+    await redisClient.set(`album_songs_${id}`, JSON.stringify(response), {
+      EX: CACHE_EXPIRY,
+    });
   }
 
   console.log("Cache miss: album_songs");

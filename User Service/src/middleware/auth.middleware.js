@@ -1,13 +1,12 @@
 import jwt from "jsonwebtoken";
 import { asyncHandler } from "../utility/asyncHandler.js";
 import { User } from "../models/user.model.js";
+
 export const verifyJWT = asyncHandler(async (req, res, next) => {
   const cookieToken =
     req.cookies?.token || req.header("Authorization")?.replace("Bearer ", "");
-  const sessionUser = req.session?.user;
-
-  if (!cookieToken && !sessionUser) {
-    return res.status(401).json({ error: "Unauthorized - no token or session" });
+  if (!cookieToken) {
+    return res.status(401).json({ error: "Unauthorized - no token " });
   }
 
   let decodedToken = null;
@@ -21,7 +20,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
   }
 
   // ✅ Fix here: extract `_id`
-  const userId = decodedToken?._id || sessionUser?._id;
+  const userId = decodedToken?._id;
 
   const user = await User.findById(userId);
   if (!user) {
