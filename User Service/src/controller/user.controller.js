@@ -82,12 +82,14 @@ export const Login = asyncHandler(async (req, res) => {
   );
 
   // ✅ Cookie options (secure only in production)
-  const cookiesOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    maxAge: 60 * 60 * 1000,
-  };
+   // Cookie options
+    const cookiesOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        maxAge: 60 * 60 * 1000
+    };
+
 
   // ✅ Send response
   return res
