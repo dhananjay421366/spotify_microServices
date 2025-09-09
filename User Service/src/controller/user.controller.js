@@ -41,66 +41,72 @@ export const Register = asyncHandler(async (req, res) => {
   });
 });
 
-// login the user 
+// Login user
 export const Login = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    // ✅ Validate input (check both, not OR)
-    if (!email || !password) {
-        return res.status(400).json({ message: "All fields are required!", success: false });
-    }
+  // ✅ Validate input
+  if (!email || !password) {
+    return res.status(400).json({ message: "All fields are required!", success: false });
+  }
 
-    // ✅ Find user by email
-    const existedUser = await User.findOne({ email });
+  // ✅ Find user by email
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found with this email",
+      success: false,
+    });
+  }
 
-    if (!existedUser) {
-        return res.status(404).json({
-            message: "User not found",
-            success: false
-        });
-    }
+  // ✅ Compare password
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return res.status(401).json({
+      message: "Invalid credentials",
+      success: false,
+    });
+  }
 
-    // ✅ Compare password
-    const isMatch = await bcrypt.compare(password, existedUser.password);
-    if (!isMatch) {
-        return res.status(401).json({
-            message: "Invalid credentials",
-            success: false
-        });
-    }
+  // ✅ Force role = admin if email matches env variable
+  if (email === process.env.ADMIN_EMAIL) {
+    user.role = "admin";
+    await user.save(); // permanently store role in DB
+  }
 
-    // ✅ Generate JWT
-    const token = jwt.sign(
-        { _id: existedUser._id },
-        process.env.JWT_SECRET_KEY,
-        { expiresIn: "1h" }
-    );
+  // ✅ Generate JWT
+  const token = jwt.sign(
+    { _id: user._id, role: user.role },
+    process.env.JWT_SECRET, // use same env as top func
+    { expiresIn: "1h" }
+  );
 
-    // ✅ Cookie options
-    const cookiesOptions = {
-        httpOnly: true,
-        secure: true,        // ❌ remove in local development if not using https
-        sameSite: "None",    // ❌ change to "Lax" if CORS issues
-        maxAge: 60 * 60 * 1000
-    };
+  // ✅ Cookie options (secure only in production)
+  const cookiesOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    maxAge: 60 * 60 * 1000,
+  };
 
-    // ✅ Send response
-    return res
-        .status(200)
-        .cookie("token", token, cookiesOptions)
-        .json({
-            message: `Welcome ${existedUser.name}`,
-            success: true,
-            data: {
-                token,
-                user: {
-                    _id: existedUser._id,
-                    name: existedUser.name,
-                    email: existedUser.email,
-                    username: existedUser.username,
-                }
-            }
-        });
+  // ✅ Send response
+  return res
+    .status(200)
+    .cookie("token", token, cookiesOptions)
+    .json({
+      message: user.role === "admin" ? "Admin login successful" : `Welcome ${user.name}`,
+      success: true,
+      data: {
+        token,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+        },
+      },
+    });
 });
 
 
@@ -187,3 +193,4 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     users, // array of user objects
   });
 });
+

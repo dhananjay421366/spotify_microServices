@@ -7,7 +7,7 @@ import axios from "axios";
 export const SongCard = ({ id, audio, title, description, thumbnail }) => {
   const audioRef = useRef(null);
   const { playSong } = useSong();
-  const server = `https://spotify-user-heqq.onrender.com`
+  const server = `https://spotify-user-g9xg.onrender.com`
 
   const [bookmarked, setBookmarked] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);

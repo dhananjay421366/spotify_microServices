@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
-const server = `https://spotify-user-heqq.onrender.com`;
+const server = `https://spotify-user-g9xg.onrender.com`;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
