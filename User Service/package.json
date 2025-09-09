@@ -16,7 +16,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "build":"npm install"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.9",
