@@ -7,7 +7,7 @@ import {
 } from "react";
 import axios from "axios";
 
-const server = "http://localhost:7000";
+const server = "https://spotify-song.onrender.com";
 const SongContext = createContext();
 import toast from "react-hot-toast";
 
