@@ -20,7 +20,7 @@ export const SpotifyLogin = () => {
 
     try {
       const data = await HandleLogin(email, password);
-      if (data?.user) {
+      if (data?.data.user) {
         setShowConfetti(true);
         setEmail("");
         setPassword("");

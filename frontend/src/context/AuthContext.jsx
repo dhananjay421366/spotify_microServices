@@ -30,10 +30,12 @@ export const AuthProvider = ({ children }) => {
       const { data } = await axios.get(`${server}/api/v1/users/me`, {
         withCredentials: true,
       });
+      console.log(data, "verified user");
+      console.log(data.user, "verified user");
+
+      console.log(data.user);
       if (data?.user) {
         setUser(data.user);
-      } else {
-        setUser(null);
       }
     } catch (err) {
       setUser(null);
@@ -76,9 +78,10 @@ export const AuthProvider = ({ children }) => {
           { email, password },
           { withCredentials: true }
         );
-
+        console.log(data.data.user);
         // ✅ backend sends { user: {...} }
-        const userData = data?.user || data?.data?.user;
+        const userData = data.data.user;
+        console.log(userData);
 
         if (userData) {
           setUser(userData);
@@ -101,7 +104,9 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      await axios.get(`${server}/api/v1/users/logout`, { withCredentials: true });
+      await axios.get(`${server}/api/v1/users/logout`, {
+        withCredentials: true,
+      });
       setUser(null);
       toast.success("Logged out successfully");
       navigate("/sign-in");
