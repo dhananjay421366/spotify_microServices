@@ -47,7 +47,9 @@ export const Login = asyncHandler(async (req, res) => {
 
   // ✅ Validate input
   if (!email || !password) {
-    return res.status(400).json({ message: "All fields are required!", success: false });
+    return res
+      .status(400)
+      .json({ message: "All fields are required!", success: false });
   }
 
   // ✅ Find user by email
@@ -82,21 +84,23 @@ export const Login = asyncHandler(async (req, res) => {
   );
 
   // ✅ Cookie options (secure only in production)
-   // Cookie options
-    const cookiesOptions = {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        maxAge: 60 * 60 * 1000
-    };
-
+  // Cookie options
+  const cookiesOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    maxAge: 60 * 60 * 1000,
+  };
 
   // ✅ Send response
   return res
     .status(200)
     .cookie("token", token, cookiesOptions)
     .json({
-      message: user.role === "admin" ? "Admin login successful" : `Welcome ${user.name}`,
+      message:
+        user.role === "admin"
+          ? "Admin login successful"
+          : `Welcome ${user.name}`,
       success: true,
       data: {
         token,
@@ -111,21 +115,31 @@ export const Login = asyncHandler(async (req, res) => {
     });
 });
 
-
 export const getProfile = asyncHandler(async (req, res) => {
-  if (req.user) {
-    return res.status(200).json({
-      success: true,
-      message: "User fetched successfully",
-      user: req.user,
-    });
-  } else {
+  if (!req.user) {
     return res.status(401).json({
       success: false,
       message: "Session expired or user not authenticated",
     });
   }
+
+  // Fetch full user from DB
+  const user = await User.findById(req.user._id).select("-password");
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "User fetched successfully",
+    user,
+  });
 });
+
 
 // logout
 export const Logout = asyncHandler(async (req, res) => {
@@ -195,4 +209,3 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     users, // array of user objects
   });
 });
-

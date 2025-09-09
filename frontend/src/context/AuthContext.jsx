@@ -18,7 +18,7 @@ const server = `https://spotify-user-g9xg.onrender.com`;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [users, setUsers] = useState([]); // store all users
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -30,7 +30,11 @@ export const AuthProvider = ({ children }) => {
       const { data } = await axios.get(`${server}/api/v1/users/me`, {
         withCredentials: true,
       });
-      if (data?.user) setUser(data.user);
+      if (data?.user) {
+        setUser(data.user);
+      } else {
+        setUser(null);
+      }
     } catch (err) {
       setUser(null);
     } finally {
@@ -56,7 +60,6 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       setError(err);
       toast.error(err.response?.data?.message || "Failed to register");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -73,16 +76,19 @@ export const AuthProvider = ({ children }) => {
           { email, password },
           { withCredentials: true }
         );
-        if (data?.user) {
-          setUser(data.user);
+
+        // ✅ backend sends { user: {...} }
+        const userData = data?.user || data?.data?.user;
+
+        if (userData) {
+          setUser(userData);
           toast.success("🎉 Logged in successfully");
-          navigate("/"); // redirect to home
+          navigate("/");
         }
         return data;
       } catch (err) {
         setError(err);
         toast.error(err.response?.data?.message || "Failed to login");
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -102,7 +108,6 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       setError(err);
       toast.error(err.response?.data?.message || "Failed to logout");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -119,7 +124,6 @@ export const AuthProvider = ({ children }) => {
       return data.users;
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to fetch users");
-      console.error(err);
     } finally {
       setLoading(false);
     }
