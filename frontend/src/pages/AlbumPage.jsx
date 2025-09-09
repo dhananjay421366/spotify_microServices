@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
-const server = "http://localhost:7000";
+const server = "https://spotify-song.onrender.com";
 
 export const AlbumPage = () => {
   const { id } = useParams();

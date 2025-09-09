@@ -41,58 +41,68 @@ export const Register = asyncHandler(async (req, res) => {
   });
 });
 
-// Login user
+// login the user 
 export const Login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+    const { email, password } = req.body;
 
-  // validate fields
-  if (!email || !password) {
-    return res.status(400).json({ error: "All fields are required!" });
-  }
+    // ✅ Validate input (check both, not OR)
+    if (!email || !password) {
+        return res.status(400).json({ message: "All fields are required!", success: false });
+    }
 
-  // check user exists
-  const user = await User.findOne({ email });
-  if (!user) {
+    // ✅ Find user by email
+    const existedUser = await User.findOne({ email });
+
+    if (!existedUser) {
+        return res.status(404).json({
+            message: "User not found",
+            success: false
+        });
+    }
+
+    // ✅ Compare password
+    const isMatch = await bcrypt.compare(password, existedUser.password);
+    if (!isMatch) {
+        return res.status(401).json({
+            message: "Invalid credentials",
+            success: false
+        });
+    }
+
+    // ✅ Generate JWT
+    const token = jwt.sign(
+        { _id: existedUser._id },
+        process.env.JWT_SECRET_KEY,
+        { expiresIn: "1h" }
+    );
+
+    // ✅ Cookie options
+    const cookiesOptions = {
+        httpOnly: true,
+        secure: true,        // ❌ remove in local development if not using https
+        sameSite: "None",    // ❌ change to "Lax" if CORS issues
+        maxAge: 60 * 60 * 1000
+    };
+
+    // ✅ Send response
     return res
-      .status(404)
-      .json({ error: "User does not exist with this email" });
-  }
-
-  // check password
-  const isValidPassword = await bcrypt.compare(password, user.password);
-  if (!isValidPassword) {
-    return res.status(401).json({ error: "Invalid credentials" });
-  }
-
-  // force role to admin if email matches
-  if (email === process.env.ADMIN_EMAIL) {
-    user.role = "admin";
-    await user.save(); // ✅ update role permanently in DB
-  }
-
-  // create JWT token
-  const token = jwt.sign(
-    { _id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "1h" }
-  );
-
-  // store JWT in cookie
-  res.cookie("token", token, {
-    httpOnly: true,
-    maxAge: 60 * 60 * 1000, // 1 hour
-  });
-
-  return res.status(200).json({
-    message:
-      user.role === "admin" ? "Admin login successful" : "Login successful",
-    user: {
-      _id: user._id,
-      email: user.email,
-      role: user.role,
-    },
-  });
+        .status(200)
+        .cookie("token", token, cookiesOptions)
+        .json({
+            message: `Welcome ${existedUser.name}`,
+            success: true,
+            data: {
+                token,
+                user: {
+                    _id: existedUser._id,
+                    name: existedUser.name,
+                    email: existedUser.email,
+                    username: existedUser.username,
+                }
+            }
+        });
 });
+
 
 export const getProfile = asyncHandler(async (req, res) => {
   if (req.user) {
@@ -177,4 +187,3 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     users, // array of user objects
   });
 });
-

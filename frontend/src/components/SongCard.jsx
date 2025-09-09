@@ -7,6 +7,7 @@ import axios from "axios";
 export const SongCard = ({ id, audio, title, description, thumbnail }) => {
   const audioRef = useRef(null);
   const { playSong } = useSong();
+  const server = `https://spotify-user-heqq.onrender.com`
 
   const [bookmarked, setBookmarked] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -17,7 +18,7 @@ export const SongCard = ({ id, audio, title, description, thumbnail }) => {
     const checkBookmarkStatus = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:8000/api/v1/users/playlist/${id}`,
+          `${server}/api/v1/users/playlist/${id}`,
           { withCredentials: true }
         );
         if (res.status === 200) {
@@ -73,7 +74,7 @@ export const SongCard = ({ id, audio, title, description, thumbnail }) => {
   const handleBookmark = async () => {
     try {
       const res = await axios.post(
-        `http://localhost:8000/api/v1/users/playlist/${id}`,
+        `${server}/api/v1/users/playlist/${id}`,
         {},
         { withCredentials: true }
       );

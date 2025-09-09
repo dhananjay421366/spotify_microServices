@@ -1,6 +1,14 @@
+// src/context/AuthContext.jsx
 import axios from "axios";
 import toast from "react-hot-toast";
-import { createContext, useContext, useState, useCallback, useMemo } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+} from "react";
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
@@ -15,7 +23,26 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Register
+  // ✅ Verify session on app load
+  const verifyUser = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${server}/api/v1/users/me`, {
+        withCredentials: true,
+      });
+      if (data?.user) setUser(data.user);
+    } catch (err) {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    verifyUser();
+  }, [verifyUser]);
+
+  // ✅ Register
   const HandleRegister = useCallback(async (username, email, password) => {
     try {
       setLoading(true);
@@ -35,28 +62,35 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Login
-  const HandleLogin = useCallback(async (email, password) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const { data } = await axios.post(
-        `${server}/api/v1/users/login`,
-        { email, password },
-        { withCredentials: true }
-      );
-      if (data?.user) setUser(data.user);
-      return data;
-    } catch (err) {
-      setError(err);
-      toast.error(err.response?.data?.message || "Failed to login");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // ✅ Login
+  const HandleLogin = useCallback(
+    async (email, password) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const { data } = await axios.post(
+          `${server}/api/v1/users/login`,
+          { email, password },
+          { withCredentials: true }
+        );
+        if (data?.user) {
+          setUser(data.user);
+          toast.success("🎉 Logged in successfully");
+          navigate("/"); // redirect to home
+        }
+        return data;
+      } catch (err) {
+        setError(err);
+        toast.error(err.response?.data?.message || "Failed to login");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [navigate]
+  );
 
-  // Logout
+  // ✅ Logout
   const HandleLogout = useCallback(async () => {
     try {
       setLoading(true);
@@ -78,7 +112,9 @@ export const AuthProvider = ({ children }) => {
   const getAllUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get(`${server}/api/v1/users/all`, { withCredentials: true });
+      const { data } = await axios.get(`${server}/api/v1/users/all`, {
+        withCredentials: true,
+      });
       if (data?.users) setUsers(data.users);
       return data.users;
     } catch (err) {
@@ -94,14 +130,25 @@ export const AuthProvider = ({ children }) => {
       user,
       setUser,
       users,
-      getAllUsers,  // expose to frontend
+      getAllUsers,
       loading,
       error,
       HandleRegister,
       HandleLogin,
       HandleLogout,
+      verifyUser,
     }),
-    [user, users, loading, error, HandleRegister, HandleLogin, HandleLogout, getAllUsers]
+    [
+      user,
+      users,
+      loading,
+      error,
+      HandleRegister,
+      HandleLogin,
+      HandleLogout,
+      getAllUsers,
+      verifyUser,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,16 +1,16 @@
+// src/pages/SpotifyLogin.jsx
 import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import Confetti from "react-confetti";
 import { useAuth } from "../context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export const SpotifyLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showConfetti, setShowConfetti] = useState(false);
 
-  const { HandleLogin, loading, setUser } = useAuth(); // setUser is now available
-  const navigate = useNavigate();
+  const { HandleLogin, loading } = useAuth();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -21,17 +21,10 @@ export const SpotifyLogin = () => {
     try {
       const data = await HandleLogin(email, password);
       if (data?.user) {
-        toast.success("🎆 You are logged in successfully!");
         setShowConfetti(true);
-
-        // Already set in context via HandleLogin
-        // setUser(data.user); // Optional if you handle it in HandleLogin
-
         setEmail("");
         setPassword("");
-
         setTimeout(() => setShowConfetti(false), 3000);
-        navigate("/");
       }
     } catch (err) {
       console.error(err);
