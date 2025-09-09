@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   addToPlaylist,
   checkBookmarkStatus,
+  getAllUsers,
   getProfile,
   Login,
   Logout,
@@ -20,5 +21,6 @@ router.post("/playlist/:id", verifyJWT, addToPlaylist);
 
 // Check bookmark status
 router.get("/playlist/:id", verifyJWT, checkBookmarkStatus);
+router.get("/all", verifyJWT, getAllUsers);
 
 export default router;

@@ -9,6 +9,7 @@ import axios from "axios";
 
 const server = "http://localhost:7000";
 const SongContext = createContext();
+import toast from "react-hot-toast";
 
 export const useSong = () => useContext(SongContext);
 
@@ -36,9 +37,9 @@ export const SongProvider = ({ children }) => {
         console.log(data.data, "all songs");
         setSongs(data.data || []);
 
-        if (data.data?.length > 0) {
-          setSelectedSong(data.data[0]?.id.toString());
-        }
+        // if (data.data?.length > 0) {
+        //   setSelectedSong(data.data[0]?.id.toString());
+        // }
         setIsPlayingSong(false);
       } catch (error) {
         console.error(error);
@@ -128,6 +129,21 @@ export const SongProvider = ({ children }) => {
     }
   };
 
+  const [artist, setArtist] = useState(null);
+  useEffect(() => {
+    const getAllArtist = async () => {
+      try {
+        setLoading(true);
+        const { data } = await axios.get(`${server}/api/v1/song/artist/all`);
+        console.log(data.data, "fetching all artist");
+        setArtist(data.data || []);
+      } catch (error) {
+        toast.error("Error to fetching all artist", error);
+      }
+    };
+    getAllArtist();
+  }, []);
+
   return (
     <SongContext.Provider
       value={{
@@ -148,6 +164,8 @@ export const SongProvider = ({ children }) => {
         playSong,
         stopSong,
         currentAudio,
+        artist,
+        setArtist,
       }}
     >
       {children}

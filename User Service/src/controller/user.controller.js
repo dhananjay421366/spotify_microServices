@@ -95,29 +95,34 @@ export const Login = asyncHandler(async (req, res) => {
 });
 
 export const getProfile = asyncHandler(async (req, res) => {
-  const user = req.user;
-  return res.status(200).json({
-    user,
-    success: "get profile successfully",
-  });
+  if (req.user) {
+    return res.status(200).json({
+      success: true,
+      message: "User fetched successfully",
+      user: req.user,
+    });
+  } else {
+    return res.status(401).json({
+      success: false,
+      message: "Session expired or user not authenticated",
+    });
+  }
 });
 
 // logout
 export const Logout = asyncHandler(async (req, res) => {
+  // 1. Clear JWT cookie
+  res.clearCookie("token"); // JWT cookie
 
-    // 1. Clear JWT cookie
-    res.clearCookie("token"); // JWT cookie
-
-    return res.status(200).json({ message: "Logged out successfully" });
-  });
-
+  return res.status(200).json({ message: "Logged out successfully" });
+});
 
 // ✅ Toggle Add / Remove playlist item
 export const addToPlaylist = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
 
   if (!userId) {
-    return res.status(401).json({ error: "Unauthorized - no token or session" });
+    return res.status(401).json({ error: "Unauthorized - no token " });
   }
 
   const user = await User.findById(new mongoose.Types.ObjectId(userId));
@@ -143,7 +148,7 @@ export const checkBookmarkStatus = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
 
   if (!userId) {
-    return res.status(401).json({ error: "Unauthorized - no token or session" });
+    return res.status(401).json({ error: "Unauthorized - no token " });
   }
 
   const user = await User.findById(userId).select("playList");
@@ -155,3 +160,21 @@ export const checkBookmarkStatus = asyncHandler(async (req, res) => {
 
   res.status(200).json({ isBookmarked });
 });
+
+export const getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find({}, "-password");
+
+  if (!users) {
+    return res.status(404).json({
+      success: false,
+      message: "No users found",
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Users fetched successfully",
+    users, // array of user objects
+  });
+});
+

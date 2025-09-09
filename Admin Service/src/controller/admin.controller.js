@@ -216,3 +216,40 @@ export const deleteSong = asyncHandler(async (req, res) => {
 
   res.json({ message: "Song deleted successfully" });
 });
+
+// ----------------- Add Artist -----------------
+export const addArtist = asyncHandler(async (req, res) => {
+  const { name, bio, thumbnail } = req.body;
+
+  if (!name) {
+    return res.status(400).json({
+      success: false,
+      message: "Artist name is required",
+    });
+  }
+
+  try {
+    const newArtist = await sql`
+      INSERT INTO artists (name, bio, thumbnail)
+      VALUES (${name}, ${bio || null}, ${thumbnail || null})
+      RETURNING *
+    `;
+
+    // Clear cache when new artist is added
+    if (redisClient.isReady) {
+      await redisClient.del("artists");
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Artist created successfully",
+      data: newArtist[0],
+    });
+  } catch (error) {
+    console.error("Error adding artist:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create artist",
+    });
+  }
+});

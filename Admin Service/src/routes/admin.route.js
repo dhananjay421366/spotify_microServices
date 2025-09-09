@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   addAlbum,
+  addArtist,
   addSong,
   addThumbnail,
   AlbumBySongs,
@@ -37,5 +38,6 @@ router.post(
 router.get("/album/songs/:id", AlbumBySongs);
 router.delete("/album/:id", verifyJWT, deleteAlbum);
 router.delete("/song/:id", verifyJWT, deleteSong);
+router.post("/artist" , addArtist);
 
 export default router;

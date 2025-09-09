@@ -127,3 +127,83 @@ export const getSingleSong = asyncHandler(async (req, res) => {
     data: song[0],
   });
 });
+
+// ----------------- Get All Artists -----------------
+export const getAllArtists = asyncHandler(async (req, res) => {
+  const CACHE_EXPIRY = 1800; // 30 minutes
+  let artists;
+
+  if (redisClient.isReady) {
+    artists = await redisClient.get("artists");
+  }
+
+  if (artists) {
+    console.log("Cache hit: artists");
+    return res.status(200).json({
+      success: true,
+      message: "Artists fetched successfully (from cache)",
+      data: JSON.parse(artists),
+    });
+  }
+
+  console.log("Cache miss: artists");
+  artists = await sql`SELECT * FROM artists`;
+
+  if (redisClient.isReady) {
+    await redisClient.set("artists", JSON.stringify(artists), {
+      EX: CACHE_EXPIRY,
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Artists fetched successfully",
+    data: artists,
+  });
+});
+
+// ----------------- Get All Songs of Artist -----------------
+export const getArtistWiseSongs = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const CACHE_EXPIRY = 1800;
+
+  if (redisClient.isReady) {
+    const cached = await redisClient.get(`artist_songs_${id}`);
+    if (cached) {
+      console.log("Cache hit: artist_songs");
+      return res.status(200).json({
+        success: true,
+        message: "Artist with songs fetched successfully (from cache)",
+        data: JSON.parse(cached),
+      });
+    }
+  }
+
+  const artist = await sql`SELECT * FROM artists WHERE id = ${id}`;
+  if (artist.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: "No artist found with this id",
+    });
+  }
+
+  // Fetch albums + songs of this artist
+  const albums = await sql`SELECT * FROM albums WHERE artist_id = ${id}`;
+  const songs = await sql`SELECT * FROM songs WHERE artist_id = ${id}`;
+
+  const response = { artist: artist[0], albums, songs };
+
+  if (redisClient.isReady) {
+    await redisClient.set(`artist_songs_${id}`, JSON.stringify(response), {
+      EX: CACHE_EXPIRY,
+    });
+  }
+
+  console.log("Cache miss: artist_songs");
+  res.status(200).json({
+    success: true,
+    message: "Artist with songs fetched successfully",
+    data: response,
+  });
+});
+
