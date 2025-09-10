@@ -6,10 +6,10 @@ import {
   useState,
 } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const server = "https://spotify-song.onrender.com";
 const SongContext = createContext();
-import toast from "react-hot-toast";
 
 export const useSong = () => useContext(SongContext);
 
@@ -21,56 +21,114 @@ export const SongProvider = ({ children }) => {
   const [index, setIndex] = useState(0);
   const [albums, setAlbums] = useState([]);
   const [song, setSong] = useState(null);
+  const [artist, setArtist] = useState(null);
 
   // 🔑 Track the currently playing audio element globally
   const [currentAudio, setCurrentAudio] = useState(null);
 
-  // Fetch all songs
+  // ✅ Fetch all songs (runs once, safe in StrictMode)
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchAllSongs = async () => {
       setLoading(true);
       try {
         const { data } = await axios.get(`${server}/api/v1/song/all`, {
           withCredentials: true,
+          signal: controller.signal,
         });
-
-        console.log(data.data, "all songs");
         setSongs(data.data || []);
-
-        // if (data.data?.length > 0) {
-        //   setSelectedSong(data.data[0]?.id.toString());
-        // }
         setIsPlayingSong(false);
       } catch (error) {
-        console.error(error);
+        if (error.name !== "CanceledError") {
+          console.error("Error fetching songs:", error);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchAllSongs();
+    return () => controller.abort(); // cleanup to prevent duplicate updates
   }, []);
 
-  // Fetch all albums (once)
+  // ✅ Fetch all albums (once)
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchAllAlbums = async () => {
       setLoading(true);
       try {
         const { data } = await axios.get(`${server}/api/v1/song/album/all`, {
           withCredentials: true,
+          signal: controller.signal,
         });
         setAlbums(data.data || []);
       } catch (error) {
-        console.error(error);
+        if (error.name !== "CanceledError") {
+          console.error("Error fetching albums:", error);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchAllAlbums();
+    return () => controller.abort();
   }, []);
 
-  // Next song
+  // ✅ Fetch single song when selection changes
+  useEffect(() => {
+    if (!selectedSong) return;
+    const controller = new AbortController();
+
+    const fetchSingleSong = async () => {
+      setLoading(true);
+      try {
+        const { data } = await axios.get(
+          `${server}/api/v1/song/${selectedSong}`,
+          { withCredentials: true, signal: controller.signal }
+        );
+        setSong(data.data);
+      } catch (error) {
+        if (error.name !== "CanceledError") {
+          console.error("Error fetching single song:", error);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSingleSong();
+    return () => controller.abort();
+  }, [selectedSong]);
+
+  // ✅ Fetch all artists (once)
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const getAllArtist = async () => {
+      setLoading(true);
+      try {
+        const { data } = await axios.get(`${server}/api/v1/song/artist/all`, {
+          signal: controller.signal,
+        });
+        setArtist(data.data || []);
+      } catch (error) {
+        if (error.name !== "CanceledError") {
+          toast.error("Error fetching all artists");
+          console.error(error);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getAllArtist();
+    return () => controller.abort();
+  }, []);
+
+  // ✅ Next song
   const nextSong = useCallback(() => {
     setIndex((prev) => {
       const newIndex = prev === songs.length - 1 ? 0 : prev + 1;
@@ -79,7 +137,7 @@ export const SongProvider = ({ children }) => {
     });
   }, [songs]);
 
-  // Prev song
+  // ✅ Previous song
   const prevSong = useCallback(() => {
     setIndex((prev) => {
       const newIndex = prev > 0 ? prev - 1 : songs.length - 1;
@@ -88,28 +146,7 @@ export const SongProvider = ({ children }) => {
     });
   }, [songs]);
 
-  // Fetch single song when selection changes
-  useEffect(() => {
-    const fetchSingleSong = async () => {
-      if (!selectedSong) return;
-      setLoading(true);
-      try {
-        const { data } = await axios.get(
-          `${server}/api/v1/song/${selectedSong}`,
-          { withCredentials: true }
-        );
-        setSong(data.data);
-      } catch (error) {
-        console.error("Error fetching single song:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSingleSong();
-  }, [selectedSong]);
-
-  // 🔑 Play a song (only one at a time)
+  // ✅ Play a song (only one at a time)
   const playSong = (audioEl) => {
     if (currentAudio && currentAudio !== audioEl) {
       currentAudio.pause();
@@ -120,7 +157,7 @@ export const SongProvider = ({ children }) => {
     setIsPlayingSong(true);
   };
 
-  // 🔑 Stop song
+  // ✅ Stop song
   const stopSong = () => {
     if (currentAudio) {
       currentAudio.pause();
@@ -128,21 +165,6 @@ export const SongProvider = ({ children }) => {
       setCurrentAudio(null);
     }
   };
-
-  const [artist, setArtist] = useState(null);
-  useEffect(() => {
-    const getAllArtist = async () => {
-      try {
-        setLoading(true);
-        const { data } = await axios.get(`${server}/api/v1/song/artist/all`);
-        console.log(data.data, "fetching all artist");
-        setArtist(data.data || []);
-      } catch (error) {
-        toast.error("Error to fetching all artist", error);
-      }
-    };
-    getAllArtist();
-  }, []);
 
   return (
     <SongContext.Provider

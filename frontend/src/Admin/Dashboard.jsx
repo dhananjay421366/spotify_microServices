@@ -1,3 +1,4 @@
+// src/Admin/Dashboard.jsx
 import { useState, useEffect } from "react";
 import Confetti from "react-confetti";
 import {
@@ -17,13 +18,9 @@ export const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("users");
   const [showConfetti, setShowConfetti] = useState(false);
 
-  const { users, getAllUsers } = useAuth(); // get users from AuthContext
-  const { albums, songs, artist: artists } = useSong(); // albums, songs, artists
+  const { users ,HandleLogout } = useAuth();
+  const { albums, songs, artist: artists } = useSong();
 
-  // Fetch users on mount
-  useEffect(() => {
-    getAllUsers();
-  }, [getAllUsers]);
 
   const handleEdit = (item) => {
     toast.success("Edit action triggered!");
@@ -88,7 +85,7 @@ export const Dashboard = () => {
           </h2>
           <button
             className="bg-red-500 px-3 py-1 rounded hover:bg-red-600 transition flex items-center gap-1"
-            onClick={() => toast("Logout clicked")}
+            onClick={() => HandleLogout()}
           >
             <FaTrash /> Logout
           </button>
@@ -154,4 +151,3 @@ export const Dashboard = () => {
     </div>
   );
 };
-

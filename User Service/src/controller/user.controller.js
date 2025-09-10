@@ -84,18 +84,18 @@ export const Login = asyncHandler(async (req, res) => {
   );
 
   // ✅ Cookie options (secure only in production)
-  // Cookie options
-  const cookiesOptions = {
-    httpOnly: true,
-    secure: true,
-    sameSite: "None",
-    maxAge: 60 * 60 * 1000,
-  };
+  const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        maxAge: 60 * 60 * 1000,
+
+    };
 
   // ✅ Send response
   return res
     .status(200)
-    .cookie("token", token, cookiesOptions)
+    .cookie("token", token, cookieOptions)
     .json({
       message:
         user.role === "admin"

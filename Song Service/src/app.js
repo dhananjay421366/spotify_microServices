@@ -7,9 +7,13 @@ import dotenv from "dotenv";
 dotenv.config();
 const app = express();
 
+// ✅ CORS fix (no space + allow local + prod)
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://gana11.netlify.app"],
+    origin: [
+      "http://localhost:5173",
+      "https://gana11.netlify.app",
+    ],
     credentials: true,
   })
 );

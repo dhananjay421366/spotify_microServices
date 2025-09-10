@@ -1,4 +1,3 @@
-// src/context/AuthContext.jsx
 import axios from "axios";
 import toast from "react-hot-toast";
 import {
@@ -19,23 +18,21 @@ const server = `https://spotify-user-g9xg.onrender.com`;
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // ✅ start as true for initial check
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // ✅ Verify session on app load
+  // ✅ Verify logged-in user on refresh
   const verifyUser = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await axios.get(`${server}/api/v1/users/me`, {
         withCredentials: true,
       });
-      console.log(data, "verified user");
-      console.log(data.user, "verified user");
-
-      console.log(data.user);
       if (data?.user) {
         setUser(data.user);
+      } else {
+        setUser(null);
       }
     } catch (err) {
       setUser(null);
@@ -78,11 +75,8 @@ export const AuthProvider = ({ children }) => {
           { email, password },
           { withCredentials: true }
         );
-        console.log(data.data.user);
-        // ✅ backend sends { user: {...} }
-        const userData = data.data.user;
-        console.log(userData);
 
+        const userData = data.data?.user;
         if (userData) {
           setUser(userData);
           toast.success("🎉 Logged in successfully");
@@ -118,33 +112,33 @@ export const AuthProvider = ({ children }) => {
     }
   }, [navigate]);
 
-  // ✅ Fetch all users
-  const getAllUsers = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data } = await axios.get(`${server}/api/v1/users/all`, {
-        withCredentials: true,
-      });
-      if (data?.users) setUsers(data.users);
-      return data.users;
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to fetch users");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  useEffect(() => {
+    const getAllUsers = async () => {
+      try {
+        const { data } = await axios.get(`${server}/api/v1/users/all`, {
+          withCredentials: true,
+        });
+        setUsers(data.users || []);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+      }
+    };
 
+    getAllUsers(); // ✅ call on mount
+  }, []); // empty dependency = run only once
+
+  // ✅ Memoized context value
   const value = useMemo(
     () => ({
       user,
       setUser,
       users,
-      getAllUsers,
       loading,
       error,
       HandleRegister,
       HandleLogin,
       HandleLogout,
+      setLoading,
       verifyUser,
     }),
     [
@@ -155,7 +149,6 @@ export const AuthProvider = ({ children }) => {
       HandleRegister,
       HandleLogin,
       HandleLogout,
-      getAllUsers,
       verifyUser,
     ]
   );
