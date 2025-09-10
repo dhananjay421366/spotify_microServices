@@ -6,33 +6,33 @@ import { uploadOnCloudinary } from "../utility/cloudinary.js";
 // ----------------- Add Album -----------------
 export const addAlbum = asyncHandler(async (req, res) => {
   if (req.user?.role !== "admin") {
-    res.status(401).json({ message: "You are not admin" });
-    return;
+    return res.status(401).json({ message: "You are not admin" });
   }
 
-  const { title, description } = req.body;
+  const { title, description, artistId } = req.body;
   const file = req.files?.thumbnail?.[0];
 
+  if (!title || !description || !artistId) {
+    return res.status(400).json({ message: "Title, description, and artistId are required" });
+  }
+
   if (!file) {
-    res.status(400).json({ message: "No file to upload" });
-    return;
+    return res.status(400).json({ message: "No file to upload" });
   }
 
   const cloud = await uploadOnCloudinary(file.path);
   if (!cloud) {
-    res.status(500).json({ message: "File upload failed" });
-    return;
+    return res.status(500).json({ message: "File upload failed" });
   }
 
   const result = await sql`
-    INSERT INTO albums (title, description, thumbnail) 
-    VALUES (${title}, ${description}, ${cloud.secure_url}) 
+    INSERT INTO albums (title, description, thumbnail, artist_id) 
+    VALUES (${title}, ${description}, ${cloud.secure_url}, ${artistId}) 
     RETURNING *
   `;
 
   if (redisClient.isReady) {
     await redisClient.del("albums");
-    console.log("Cache invalidated for albums");
   }
 
   res.json({ message: "Album Created", album: result[0] });
@@ -41,38 +41,37 @@ export const addAlbum = asyncHandler(async (req, res) => {
 // ----------------- Add Song -----------------
 export const addSong = asyncHandler(async (req, res) => {
   if (req.user?.role !== "admin") {
-    res.status(401).json({ message: "You are not admin" });
-    return;
+    return res.status(401).json({ message: "You are not admin" });
   }
 
-  const { title, description, albumId } = req.body;
-  const isAlbum = await sql`SELECT * FROM albums WHERE id = ${albumId}`;
+  const { title, description, albumId, artistId } = req.body;
 
+  if (!title || !description || !albumId || !artistId) {
+    return res.status(400).json({ message: "Title, description, albumId, and artistId are required" });
+  }
+
+  const isAlbum = await sql`SELECT * FROM albums WHERE id = ${albumId}`;
   if (isAlbum.length === 0) {
-    res.status(404).json({ message: "No album with this id" });
-    return;
+    return res.status(404).json({ message: "No album with this id" });
   }
 
   const file = req.files?.audio?.[0];
   if (!file) {
-    res.status(400).json({ message: "No file to upload" });
-    return;
+    return res.status(400).json({ message: "No audio file to upload" });
   }
 
   const cloud = await uploadOnCloudinary(file.path);
   if (!cloud) {
-    res.status(500).json({ message: "File upload failed" });
-    return;
+    return res.status(500).json({ message: "File upload failed" });
   }
 
   await sql`
-    INSERT INTO songs (title, description, audio, album_id) 
-    VALUES (${title}, ${description}, ${cloud.secure_url}, ${albumId})
+    INSERT INTO songs (title, description, audio, album_id, artist_id) 
+    VALUES (${title}, ${description}, ${cloud.secure_url}, ${albumId}, ${artistId})
   `;
 
   if (redisClient.isReady) {
     await redisClient.del("songs");
-    console.log("Cache invalidated for songs");
   }
 
   res.json({ message: "Song Added" });
@@ -82,73 +81,60 @@ export const addSong = asyncHandler(async (req, res) => {
 export const AlbumBySongs = asyncHandler(async (req, res) => {
   const album_id = req.params.id;
 
-  // Validate input
   if (!album_id || isNaN(album_id)) {
     return res.status(400).json({ message: "Valid album id is required!" });
   }
 
-  // Check cache first
   const cacheKey = `album:${album_id}:songs`;
   if (redisClient.isReady) {
     const cached = await redisClient.get(cacheKey);
     if (cached) {
-      console.log("Cache hit for album songs");
       return res.json({ songs: JSON.parse(cached), cached: true });
     }
   }
 
-  // Verify album exists
   const album = await sql`SELECT * FROM albums WHERE id = ${album_id}`;
   if (album.length === 0) {
     return res.status(404).json({ message: "Album not found" });
   }
 
-  // Fetch songs for this album
   const songs = await sql`
-    SELECT id, title, description, audio, thumbnail, album_id 
+    SELECT id, title, description, audio, thumbnail, album_id, artist_id 
     FROM songs 
     WHERE album_id = ${album_id}
     ORDER BY id DESC
   `;
 
   if (songs.length === 0) {
-    return res
-      .status(200)
-      .json({ message: "No songs in this album", songs: [] });
+    return res.status(200).json({ message: "No songs in this album", songs: [] });
   }
 
-  // Store in cache for next time
   if (redisClient.isReady) {
-    await redisClient.set(cacheKey, JSON.stringify(songs), { EX: 60 * 5 }); // cache for 5 min
-    console.log("Cache set for album songs");
+    await redisClient.set(cacheKey, JSON.stringify(songs), { EX: 60 * 5 });
   }
 
   res.json({ songs });
 });
 
-// ----------------- Add Thumbnail -----------------
+// ----------------- Add Thumbnail to Song -----------------
 export const addThumbnail = asyncHandler(async (req, res) => {
   if (req.user?.role !== "admin") {
-    res.status(401).json({ message: "You are not admin" });
-    return;
+    return res.status(401).json({ message: "You are not admin" });
   }
 
   const song = await sql`SELECT * FROM songs WHERE id = ${req.params.id}`;
   if (song.length === 0) {
-    res.status(404).json({ message: "No song with this id" });
-    return;
+    return res.status(404).json({ message: "No song with this id" });
   }
 
   const file = req.files?.thumbnail?.[0];
   if (!file) {
-    res.status(400).json({ message: "No file to upload" });
-    return;
+    return res.status(400).json({ message: "No file to upload" });
   }
 
   const cloud = await uploadOnCloudinary(file.path);
   if (!cloud) {
-    res.status(500).json({ message: "File upload failed" });
-    return;
+    return res.status(500).json({ message: "File upload failed" });
   }
 
   const result = await sql`
@@ -159,7 +145,6 @@ export const addThumbnail = asyncHandler(async (req, res) => {
 
   if (redisClient.isReady) {
     await redisClient.del("songs");
-    console.log("Cache invalidated for songs");
   }
 
   res.json({ message: "Thumbnail added", song: result[0] });
@@ -168,16 +153,14 @@ export const addThumbnail = asyncHandler(async (req, res) => {
 // ----------------- Delete Album -----------------
 export const deleteAlbum = asyncHandler(async (req, res) => {
   if (req.user?.role !== "admin") {
-    res.status(401).json({ message: "You are not admin" });
-    return;
+    return res.status(401).json({ message: "You are not admin" });
   }
 
   const { id } = req.params;
   const isAlbum = await sql`SELECT * FROM albums WHERE id = ${id}`;
 
   if (isAlbum.length === 0) {
-    res.status(404).json({ message: "No album with this id" });
-    return;
+    return res.status(404).json({ message: "No album with this id" });
   }
 
   await sql`DELETE FROM songs WHERE album_id = ${id}`;
@@ -186,7 +169,6 @@ export const deleteAlbum = asyncHandler(async (req, res) => {
   if (redisClient.isReady) {
     await redisClient.del("albums");
     await redisClient.del("songs");
-    console.log("Cache invalidated for albums and songs");
   }
 
   res.json({ message: "Album deleted successfully" });
@@ -195,23 +177,20 @@ export const deleteAlbum = asyncHandler(async (req, res) => {
 // ----------------- Delete Song -----------------
 export const deleteSong = asyncHandler(async (req, res) => {
   if (req.user?.role !== "admin") {
-    res.status(401).json({ message: "You are not admin" });
-    return;
+    return res.status(401).json({ message: "You are not admin" });
   }
 
   const { id } = req.params;
   const song = await sql`SELECT * FROM songs WHERE id = ${id}`;
 
   if (song.length === 0) {
-    res.status(404).json({ message: "No song with this id" });
-    return;
+    return res.status(404).json({ message: "No song with this id" });
   }
 
   await sql`DELETE FROM songs WHERE id = ${id}`;
 
   if (redisClient.isReady) {
     await redisClient.del("songs");
-    console.log("Cache invalidated for songs");
   }
 
   res.json({ message: "Song deleted successfully" });
@@ -219,37 +198,36 @@ export const deleteSong = asyncHandler(async (req, res) => {
 
 // ----------------- Add Artist -----------------
 export const addArtist = asyncHandler(async (req, res) => {
-  const { name, bio, thumbnail } = req.body;
+  const { name, bio } = req.body;
+  const file = req.files?.thumbnail?.[0];
 
   if (!name) {
-    return res.status(400).json({
-      success: false,
-      message: "Artist name is required",
-    });
+    return res.status(400).json({ success: false, message: "Artist name is required" });
   }
 
-  try {
-    const newArtist = await sql`
-      INSERT INTO artists (name, bio, thumbnail)
-      VALUES (${name}, ${bio || null}, ${thumbnail || null})
-      RETURNING *
-    `;
-
-    // Clear cache when new artist is added
-    if (redisClient.isReady) {
-      await redisClient.del("artists");
+  let thumbnail = null;
+  if (file) {
+    const cloud = await uploadOnCloudinary(file.path);
+    if (!cloud) {
+      return res.status(500).json({ success: false, message: "Thumbnail upload failed" });
     }
-
-    res.status(201).json({
-      success: true,
-      message: "Artist created successfully",
-      data: newArtist[0],
-    });
-  } catch (error) {
-    console.error("Error adding artist:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to create artist",
-    });
+    thumbnail = cloud.secure_url;
   }
+
+  const newArtist = await sql`
+    INSERT INTO artists (name, bio, thumbnail)
+    VALUES (${name}, ${bio || null}, ${thumbnail})
+    RETURNING *
+  `;
+
+  if (redisClient.isReady) {
+    await redisClient.del("artists");
+  }
+
+  res.status(201).json({
+    success: true,
+    message: "Artist created successfully",
+    data: newArtist[0],
+  });
 });
+

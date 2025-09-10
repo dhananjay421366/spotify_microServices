@@ -1,74 +1,95 @@
-import { useNavigate } from "react-router-dom";
-import { GrInstallOption } from "react-icons/gr";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { HiMenu, HiX } from "react-icons/hi";
 
 export const Navbar = () => {
-  const navigate = useNavigate();
-  const { HandleLogout } = useAuth();
+  const { user, HandleLogout } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleMenu = () => setIsOpen(!isOpen);
 
   return (
-    <>
-      <div className="w-full flex justify-between items-center font-semibold">
-        {/* Navigation arrows */}
-        <div className="flex items-center gap-2">
-          <img
-            src="/left_arrow.png"
-            alt="Back"
-            className="w-8 bg-black p-2 rounded-2xl cursor-pointer"
-            onClick={() => navigate(-1)}
-          />
-          <img
-            src="/right_arrow.png"
-            alt="Forward"
-            className="w-8 bg-black p-2 rounded-2xl cursor-pointer"
-            onClick={() => window.history.forward()}
-          />
-        </div>
+    <nav className="w-full bg-[#121212] text-gray-500 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16 items-center">
+          {/* Logo */}
+         <Link to={"/"}>
+          <div className="flex-shrink-0">
+            <h1 className="text-2xl font-bold text-white">Gana11</h1>
+          </div>
+         </Link>
 
-        {/* Right-side actions */}
-        <div className="flex items-center gap-4">
-          <p className="px-4 py-1 bg-white text-black text-[15px] rounded-full cursor-pointer hidden md:block">
-            Explore Premium
-          </p>
+          {/* Desktop Menu */}
+          <div className="hidden md:flex space-x-6">
+            <Link to="/" className="hover:text-white transition">
+              Home
+            </Link>
+            <Link to="/premium" className="text-white font-semibold">
+              Premium
+            </Link>
+            <Link to="/albums" className="hover:text-white transition">
+              Albums
+            </Link>
+            <Link to="/support" className="hover:text-white transition">
+              Contact
+            </Link>
+          </div>
 
-          <a
-            href="https://www.spotify.com/de-en/download/windows/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <p className="px-4 py-1 md:flex items-center gap-2 bg-white text-black text-[15px] rounded-full cursor-pointer hidden">
-              <GrInstallOption />
-              Install App
-            </p>
-          </a>
+          {/* Desktop Button */}
+          <div className="hidden md:flex">
+            {user ? (
+              <button className="bg-white text-gray-900 px-4 py-2 rounded-md font-semibold hover:opacity-90 transition">
+                Logout
+              </button>
+            ) : (
+              <button className="bg-white text-gray-900 px-4 py-2 rounded-md font-semibold hover:opacity-90 transition">
+                Login
+              </button>
+            )}
+          </div>
 
-          <p
-            className="px-4 py-1 bg-white text-black text-[15px] rounded-full cursor-pointer"
-            onClick={HandleLogout}
-          >
-            Logout
-          </p>
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center">
+            <button onClick={toggleMenu}>
+              {isOpen ? (
+                <HiX className="text-white w-6 h-6" />
+              ) : (
+                <HiMenu className="text-white w-6 h-6" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Category buttons */}
-      <div className="flex items-center gap-2 mt-4">
-        <p className="bg-white text-black px-4 py-1 rounded-2xl cursor-pointer">
-          All
-        </p>
-        <p className="bg-white text-black px-4 py-1 rounded-2xl cursor-pointer hidden md:block">
-          Music
-        </p>
-        <p className="bg-white text-black px-4 py-1 rounded-2xl cursor-pointer hidden md:block">
-          Podcasts
-        </p>
-        <p
-          className="bg-white text-black px-4 py-1 rounded-2xl cursor-pointer md:hidden"
-          onClick={() => navigate("/playlist")}
-        >
-          PlayList
-        </p>
-      </div>
-    </>
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="md:hidden bg-[#121212] px-4 pt-2 pb-4 space-y-2">
+          <Link to="/" className="block text-gray-300 hover:text-white transition">
+            Home
+          </Link>
+          <Link to="/premium" className="block text-white font-semibold">
+            Premium
+          </Link>
+          <Link to="/" className="block text-gray-300 hover:text-white transition">
+            Albums
+          </Link>
+          <Link to="/" className="block text-gray-300 hover:text-white transition">
+            Contact
+          </Link>
+          {user ? (
+            <button onClick={HandleLogout} className="w-full bg-white text-gray-900 px-4 py-2 rounded-md font-semibold hover:opacity-90 transition mt-2">
+              Logout
+            </button>
+          ) : (
+           <Link to={"/sign-in"}>
+            <button className="w-full bg-white text-gray-900 px-4 py-2 rounded-md font-semibold hover:opacity-90 transition mt-2">
+              Login
+            </button>
+           </Link>
+          )}
+        </div>
+      )}
+    </nav>
   );
 };

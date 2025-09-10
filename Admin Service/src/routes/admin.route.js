@@ -6,7 +6,7 @@ import {
   addThumbnail,
   AlbumBySongs,
   deleteAlbum,
-  deleteSong,
+  deleteSong
 } from "../controller/admin.controller.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -38,6 +38,6 @@ router.post(
 router.get("/album/songs/:id", AlbumBySongs);
 router.delete("/album/:id", verifyJWT, deleteAlbum);
 router.delete("/song/:id", verifyJWT, deleteSong);
-router.post("/artist" , addArtist);
+router.post("/artist", addArtist);
 
 export default router;

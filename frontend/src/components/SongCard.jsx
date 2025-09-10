@@ -8,6 +8,7 @@ export const SongCard = ({ id, audio, title, description, thumbnail }) => {
   const audioRef = useRef(null);
   const { playSong } = useSong();
   const server = `https://spotify-user-g9xg.onrender.com`
+  // const server = `http://localhost:8000`
 
   const [bookmarked, setBookmarked] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
