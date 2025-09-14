@@ -13,17 +13,29 @@ export const addAlbum = asyncHandler(async (req, res) => {
   const file = req.files?.thumbnail?.[0];
 
   if (!title || !description || !artistId) {
-    return res.status(400).json({ message: "Title, description, and artistId are required" });
+    return res
+      .status(400)
+      .json({ message: "Title, description, and artistId are required" });
   }
+  const audioFile = req.files?.audio?.[0];
+  const thumbFile = req.files?.thumbnail?.[0];
 
-  if (!file) {
-    return res.status(400).json({ message: "No file to upload" });
+  if (audioFile && thumbFile) {
+    return res
+      .status(400)
+      .json({ message: "Audio file and Thumbnail file are required" });
   }
+  const audioCloud = await uploadOnCloudinary(audioFile.path);
+  let thumbnailUrl = null;
 
-  const cloud = await uploadOnCloudinary(file.path);
-  if (!cloud) {
-    return res.status(500).json({ message: "File upload failed" });
-  }
+  const thumbCloud = await uploadOnCloudinary(thumbFile.path);
+  thumbnailUrl = thumbCloud?.secure_url || null;
+
+  // insert with thumbnailUrl
+  await sql`
+  INSERT INTO songs (title, description, audio, thumbnail, album_id, artist_id)
+  VALUES (${title}, ${description}, ${audioCloud.secure_url}, ${thumbCloud.secure_url}, ${albumId}, ${artistId})
+`;
 
   const result = await sql`
     INSERT INTO albums (title, description, thumbnail, artist_id) 
@@ -45,36 +57,39 @@ export const addSong = asyncHandler(async (req, res) => {
   }
 
   const { title, description, albumId, artistId } = req.body;
+  const audioFile = req.files?.audio?.[0];
+  const thumbFile = req.files?.thumbnail?.[0];
 
+  // Validate fields
   if (!title || !description || !albumId || !artistId) {
-    return res.status(400).json({ message: "Title, description, albumId, and artistId are required" });
+    return res.status(400).json({ message: "Title, description, albumId and artistId are required" });
   }
 
-  const isAlbum = await sql`SELECT * FROM albums WHERE id = ${albumId}`;
-  if (isAlbum.length === 0) {
-    return res.status(404).json({ message: "No album with this id" });
+  if (!audioFile || !thumbFile) {
+    return res.status(400).json({ message: "Audio file and Thumbnail file are required" });
   }
 
-  const file = req.files?.audio?.[0];
-  if (!file) {
-    return res.status(400).json({ message: "No audio file to upload" });
-  }
+  // Upload files to Cloudinary
+  const audioCloud = await uploadOnCloudinary(audioFile.path);
+  const thumbCloud = await uploadOnCloudinary(thumbFile.path);
 
-  const cloud = await uploadOnCloudinary(file.path);
-  if (!cloud) {
+  if (!audioCloud || !thumbCloud) {
     return res.status(500).json({ message: "File upload failed" });
   }
 
-  await sql`
-    INSERT INTO songs (title, description, audio, album_id, artist_id) 
-    VALUES (${title}, ${description}, ${cloud.secure_url}, ${albumId}, ${artistId})
+  // Insert song into DB
+  const result = await sql`
+    INSERT INTO songs (title, description, audio, thumbnail, album_id, artist_id)
+    VALUES (${title}, ${description}, ${audioCloud.secure_url}, ${thumbCloud.secure_url}, ${albumId}, ${artistId})
+    RETURNING *
   `;
 
+  // (Optional) clear Redis cache for songs if you are caching
   if (redisClient.isReady) {
-    await redisClient.del("songs");
+    await redisClient.del(`songs:album:${albumId}`);
   }
 
-  res.json({ message: "Song Added" });
+  res.json({ message: "Song Created", song: result[0] });
 });
 
 // ----------------- Get Songs by Album -----------------
@@ -106,7 +121,9 @@ export const AlbumBySongs = asyncHandler(async (req, res) => {
   `;
 
   if (songs.length === 0) {
-    return res.status(200).json({ message: "No songs in this album", songs: [] });
+    return res
+      .status(200)
+      .json({ message: "No songs in this album", songs: [] });
   }
 
   if (redisClient.isReady) {
@@ -202,14 +219,18 @@ export const addArtist = asyncHandler(async (req, res) => {
   const file = req.files?.thumbnail?.[0];
 
   if (!name) {
-    return res.status(400).json({ success: false, message: "Artist name is required" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Artist name is required" });
   }
 
   let thumbnail = null;
   if (file) {
     const cloud = await uploadOnCloudinary(file.path);
     if (!cloud) {
-      return res.status(500).json({ success: false, message: "Thumbnail upload failed" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Thumbnail upload failed" });
     }
     thumbnail = cloud.secure_url;
   }
@@ -230,4 +251,3 @@ export const addArtist = asyncHandler(async (req, res) => {
     data: newArtist[0],
   });
 });
-

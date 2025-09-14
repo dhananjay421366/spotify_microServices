@@ -7,8 +7,8 @@ import axios from "axios";
 export const SongCard = ({ id, audio, title, description, thumbnail }) => {
   const audioRef = useRef(null);
   const { playSong } = useSong();
-  const server = `https://spotify-user-g9xg.onrender.com`
-  // const server = `http://localhost:8000`
+  // const server = `https://spotify-user-g9xg.onrender.com`;
+  const server = `http://localhost:8000`
 
   const [bookmarked, setBookmarked] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -18,10 +18,9 @@ export const SongCard = ({ id, audio, title, description, thumbnail }) => {
   useEffect(() => {
     const checkBookmarkStatus = async () => {
       try {
-        const res = await axios.get(
-          `${server}/api/v1/users/playlist/${id}`,
-          { withCredentials: true }
-        );
+        const res = await axios.get(`${server}/api/v1/users/playlist/${id}`, {
+          withCredentials: true,
+        });
         if (res.status === 200) {
           setBookmarked(res.data.isBookmarked);
         }
@@ -38,7 +37,7 @@ export const SongCard = ({ id, audio, title, description, thumbnail }) => {
     if (!audioRef.current) return;
 
     const handleLoadedMetadata = () => {
-      const seconds = Math.floor(audioRef.current.duration);
+      const seconds = Math.floor(audioRef?.current?.duration);
       const minutes = Math.floor(seconds / 60);
       const remainingSeconds = seconds % 60;
       setDuration(
@@ -104,7 +103,7 @@ export const SongCard = ({ id, audio, title, description, thumbnail }) => {
         {/* Play / Pause Button */}
         <button
           onClick={handlePlayPause}
-          className="absolute bottom-2 right-2 bg-green-500 p-3 rounded-full opacity-0 group-hover:opacity-100 transition"
+          className="absolute bottom-2 right-2 bg-green-500 p-3 rounded-full  group-hover:opacity-100 transition"
         >
           {isPlaying ? <FaPause /> : <FaPlay />}
         </button>

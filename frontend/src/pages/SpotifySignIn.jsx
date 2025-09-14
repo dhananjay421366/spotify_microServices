@@ -11,7 +11,7 @@ export const SpotifySignup = () => {
   const [showConfetti, setShowConfetti] = useState(false);
 
   const { HandleRegister, loading } = useAuth();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleSignup = async () => {
     if (!username || !email || !password) {
@@ -31,7 +31,7 @@ export const SpotifySignup = () => {
         setPassword("");
 
         setTimeout(() => setShowConfetti(false), 3000);
-        navigate("/sign-in")
+        navigate("/sign-in");
       }
     } catch (err) {
       // Error is already handled inside HandleRegister with toast
@@ -75,7 +75,11 @@ export const SpotifySignup = () => {
         <button
           onClick={handleSignup}
           className={`w-full py-2 rounded font-semibold text-black 
-            ${loading ? "bg-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 transition"}
+            ${
+              loading
+                ? "bg-gray-500 cursor-not-allowed"
+                : "bg-green-500 hover:bg-green-600 transition"
+            }
           `}
           disabled={loading}
         >
@@ -85,9 +89,9 @@ export const SpotifySignup = () => {
         <p className="text-center text-gray-400">
           Already have an account?{" "}
           <Link to="/sign-in">
-          <span className="text-green-500 underline cursor-pointer hover:text-green-400 transition">
-            Log in
-          </span>
+            <span className="text-green-500 underline cursor-pointer hover:text-green-400 transition">
+              Log in
+            </span>
           </Link>
         </p>
       </div>

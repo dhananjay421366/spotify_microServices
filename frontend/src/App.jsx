@@ -13,11 +13,12 @@ import { AlbumPage } from "./pages/AlbumPage";
 import { Home } from "./pages/Home";
 import { SpotifyLogin } from "./pages/SpotifyLogin";
 import { SpotifySignup } from "./pages/SpotifySignIn";
+import LinkedInOpenAnimation from "./components/Animation/Animation1";
 
 function App() {
   const { user, setUser } = useAuth();
-  const server = `https://spotify-user-g9xg.onrender.com`;
-  // const server = `http://localhost:8000`;
+  // const server = `https://spotify-user-g9xg.onrender.com`;
+  const server = `http://localhost:8000`;
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -40,10 +41,23 @@ function App() {
   // ✅ Skeleton screen while checking session
   if (checking) {
     return (
-      <div className="flex flex-col gap-4 p-4">
-        <div className="h-8 bg-gray-700 rounded animate-pulse w-3/4"></div>
-        <div className="h-8 bg-gray-700 rounded animate-pulse w-1/2"></div>
-        <div className="h-8 bg-gray-700 rounded animate-pulse w-full"></div>
+      <div className="container flex flex-col items-center justify-center">
+        {/* Logo Section */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Circle logo icon */}
+          <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 via-blue-500 to-cyan-400 shadow-lg shadow-blue-400/40 animate-pulse">
+            <span className="text-white font-extrabold text-lg">G</span>
+          </div>
+          {/* Gradient Text Logo */}
+          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-400 via-blue-600 to-indigo-500 bg-clip-text text-transparent drop-shadow-md">
+            Gana11
+          </h1>
+        </div>
+
+        {/* Loader line */}
+        <div className="line mt-6 w-full">
+          <div className="inner"></div>
+        </div>
       </div>
     );
   }
@@ -67,7 +81,8 @@ function App() {
       <Route path="/premium" element={<PremiumPage />} />
       <Route path="/support" element={<Support />} />
       <Route path="/albums" element={<AllAlbum />} />
-      <Route path="/artist/:id" element={< ArtistSongs/>} />
+      <Route path="/artist/:id" element={<ArtistSongs />} />
+      <Route path="/animation" element={<LinkedInOpenAnimation />} />
 
       {/* Admin protected route */}
       <Route

@@ -3,6 +3,8 @@ import { asyncHandler } from "../utility/asyncHandler.js";
 
 export const verifyJWT = asyncHandler(async (req, res, next) => {
   const cookieToken = req.cookies?.token || req.headers.token;
+  console.log(cookieToken);
+  
 
   if (!cookieToken) {
     return res.status(401).json({ error: "Unauthorized - no token" });
