@@ -15,7 +15,8 @@ export default function ArtistSongs() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
 
-  const server = `https://spotify-song.onrender.com`
+  // const server = `https://spotify-song.onrender.com`
+  const server = `http://localhost:7000`
 
   // Likes
   const [likes, setLikes] = useState(() => {

@@ -170,8 +170,8 @@ import { Modal } from "../components/Model";
 import { FileInput } from "../components/FileInput";
 
 const api = axios.create({
-  baseURL: "https://spotify-admin-dimp.onrender.com/api/v1/admin", // update when deploying
-  // baseURL: "http://localhost:8000/api/v1/admin", // update when deploying
+  // baseURL: "https://spotify-admin-dimp.onrender.com/api/v1/admin", // update when deploying
+  baseURL: "http://localhost:8000/api/v1/admin", // update when deploying
   withCredentials: true,
 });
 

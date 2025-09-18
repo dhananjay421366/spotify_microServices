@@ -8,8 +8,8 @@ import {
 import axios from "axios";
 import toast from "react-hot-toast";
 
-const server = "https://spotify-song.onrender.com";
-// const server = `http://localhost:7000`
+// const server = "https://spotify-song.onrender.com";
+const server = `http://localhost:7000`
 const SongContext = createContext();
 
 export const useSong = () => useContext(SongContext);

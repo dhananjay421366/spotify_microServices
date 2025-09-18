@@ -85,12 +85,11 @@ export const Login = asyncHandler(async (req, res) => {
 
   // ✅ Cookie options (secure only in production)
   const cookieOptions = {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        maxAge: 60 * 60 * 1000,
-
-    };
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    maxAge: 60 * 60 * 1000,
+  };
 
   // ✅ Send response
   return res
@@ -140,7 +139,6 @@ export const getProfile = asyncHandler(async (req, res) => {
   });
 });
 
-
 // logout
 export const Logout = asyncHandler(async (req, res) => {
   // 1. Clear JWT cookie
@@ -149,7 +147,7 @@ export const Logout = asyncHandler(async (req, res) => {
   return res.status(200).json({ message: "Logged out successfully" });
 });
 
-// ✅ Toggle Add / Remove playlist item
+//  Toggle Add / Remove playlist item
 export const addToPlaylist = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
 
@@ -163,7 +161,7 @@ export const addToPlaylist = asyncHandler(async (req, res) => {
   }
 
   // toggle playlist item
-  if (user.playList.includes(req.params.id)) {
+  if (user.playList.includes(req.params?.id)) {
     user.playList = user.playList.filter((item) => item !== req.params.id);
     await user.save();
     return res.json({ message: "Removed from playlist", isBookmarked: false });
@@ -175,12 +173,12 @@ export const addToPlaylist = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Added to playlist", isBookmarked: true });
 });
 
-// ✅ Check bookmark status (for reload)
+//  Check bookmark status (for reload)
 export const checkBookmarkStatus = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
 
   if (!userId) {
-    return res.status(401).json({ error: "Unauthorized - no token " });
+    return res.status(401).json({ error: "Unauthorized - no token" });
   }
 
   const user = await User.findById(userId).select("playList");
@@ -188,7 +186,10 @@ export const checkBookmarkStatus = asyncHandler(async (req, res) => {
     return res.status(404).json({ error: "User not found" });
   }
 
-  const isBookmarked = user.playList.includes(req.params.id);
+  // Compare ObjectIds properly
+  const isBookmarked = user.playList.some(
+    (item) => item.toString() === req.params.id
+  );
 
   res.status(200).json({ isBookmarked });
 });

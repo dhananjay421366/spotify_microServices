@@ -17,8 +17,8 @@ import LinkedInOpenAnimation from "./components/Animation/Animation1";
 
 function App() {
   const { user, setUser } = useAuth();
-  const server = `https://spotify-user-g9xg.onrender.com`;
-  // const server = `http://localhost:8000`;
+  // const server = `https://spotify-user-g9xg.onrender.com`;
+  const server = `http://localhost:8000`;
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
