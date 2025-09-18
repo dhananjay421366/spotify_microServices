@@ -20,13 +20,13 @@ const userSchema = new Schema(
       type: String,
       default: "user",
     },
-    playList: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Song",
-        default: [],
-      },
-    ],
+   playList: [
+  {
+    type: String,  
+    default: [],
+  },
+],
+
   },
   { timestamps: true }
 );
