@@ -375,60 +375,62 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
 
 
-
-
 /* Email services */
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 dotenv.config();
 
+// Use secure SMTP instead of 'service' for production reliability
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465, // SSL port
+  secure: true, // true for 465, false for other ports
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.EMAIL_USER, // your Gmail
+    pass: process.env.EMAIL_PASS, // App Password, NOT normal Gmail password
   },
 });
-//I have to change it when I got frontend. means the mails will send to open frontend page where there will button for verify which will call this verification link(api endpoint)
+
+// Send verification email
 export const sendVerificationEmail = async (email, verificationLink) => {
   try {
-    console.log("📨 Sending email...");
+    console.log("📨 Sending verification email...");
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `"Gana11 App" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "Verification Link for Email ✔",
+      subject: "Verify Your Email ✔",
       text: `Click this link to verify your email: ${verificationLink}`,
+      html: `<p>Click the button below to verify your email:</p>
+             <a href="${verificationLink}" style="display:inline-block;padding:10px 20px;background:#22c55e;color:white;border-radius:5px;text-decoration:none;">Verify Email</a>`,
     };
 
-    // Use await here
     const info = await transporter.sendMail(mailOptions);
-
-    console.log("Email sent:", info.response);
-    return true; // success
+    console.log("✅ Verification email sent:", info.response);
+    return true;
   } catch (error) {
-    console.error(" Error sending email:", error);
-    return false; // failure
+    console.error("❌ Error sending verification email:", error);
+    return false;
   }
 };
 
-/* send mail for reset pass */
+// Send password reset email
 export const sendResetPassword = async (email, link) => {
   try {
+    console.log("📨 Sending password reset email...");
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `"Gana11 App" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Password Reset ✔",
       text: `Click this link to reset your password: ${link}`,
-      // optionally, you can use HTML for a button
-      html: `<a href="${link}">Reset Password</a>`,
+      html: `<p>Click the button below to reset your password:</p>
+             <a href="${link}" style="display:inline-block;padding:10px 20px;background:#3b82f6;color:white;border-radius:5px;text-decoration:none;">Reset Password</a>`,
     };
 
     const info = await transporter.sendMail(mailOptions);
-
-    console.log(" Reset password email sent:", info.response);
+    console.log("✅ Password reset email sent:", info.response);
     return true;
   } catch (error) {
-    console.error(" Error sending reset email:", error);
+    console.error("❌ Error sending reset email:", error);
     return false;
   }
 };
