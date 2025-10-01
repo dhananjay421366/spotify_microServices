@@ -383,13 +383,16 @@ dotenv.config();
 // Use secure SMTP instead of 'service' for production reliability
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 465, // SSL port
-  secure: true, // true for 465, false for other ports
+  port: 465,
+  secure: true,
   auth: {
-    user: process.env.EMAIL_USER, // your Gmail
-    pass: process.env.EMAIL_PASS, // App Password, NOT normal Gmail password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
+  logger: true,   // log everything to console
+  debug: true,    // show SMTP connection logs
 });
+
 
 // Send verification email
 export const sendVerificationEmail = async (email, verificationLink) => {
