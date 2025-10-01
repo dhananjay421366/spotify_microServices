@@ -371,6 +371,12 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   });
 });
 
+
+
+
+
+
+
 /* Email services */
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
@@ -404,6 +410,8 @@ export const sendVerificationEmail = async (email, verificationLink) => {
     return false; // failure
   }
 };
+
+/* send mail for reset pass */
 export const sendResetPassword = async (email, link) => {
   try {
     const mailOptions = {
