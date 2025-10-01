@@ -22,30 +22,30 @@ export const Register = asyncHandler(async (req, res) => {
   // 3. Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // 4. Create verification token
+  // 4. Generate verification token
   const verification_token = jwt.sign({ email }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
 
-  const verification_link = `${process.env.BACKEND_URL}/verify/${verification_token}`;
-
-  // 5. Send verification email
-  const mailSuccess = await sendVerificationEmail(email, verification_link);
-  if (!mailSuccess) {
-    return res.status(500).json({ error: "Failed to send verification email" });
-  }
-
-  // 6. Save user in DB
+  // 5. Create new user
   const user = new User({
     username,
     email,
     password: hashedPassword,
     playList: [],
     verification_token,
-    isVerified: false, // new users start as unverified
+    isVerified: false,
   });
 
   await user.save();
+
+  // 6. Send verification email
+  const verification_link = `${process.env.BACKEND_URL}/verify/${verification_token}`;
+  const mailSuccess = await sendVerificationEmail(email, verification_link);
+
+  if (!mailSuccess) {
+    return res.status(500).json({ error: "Failed to send verification email" });
+  }
 
   // 7. Success response
   res.status(201).json({
@@ -54,6 +54,7 @@ export const Register = asyncHandler(async (req, res) => {
       "User registered successfully. Please check your email for verification link.",
   });
 });
+
 
 // verifyEmail
 export const verifyEmail = asyncHandler(async (req, res) => {
@@ -371,10 +372,6 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   });
 });
 
-
-
-
-
 /* Email services */
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
@@ -389,10 +386,9 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  logger: true,   // log everything to console
-  debug: true,    // show SMTP connection logs
+  logger: true, // log everything to console
+  debug: true, // show SMTP connection logs
 });
-
 
 // Send verification email
 export const sendVerificationEmail = async (email, verificationLink) => {
