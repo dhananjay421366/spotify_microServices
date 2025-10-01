@@ -2,14 +2,13 @@ import { Router } from "express";
 import {
   addToPlaylist,
   checkBookmarkStatus,
+  forgot_password,
   getAllUsers,
   getProfile,
   Login,
   Logout,
   Register,
-  verifyEmail,
-  forgot_password,
-  reset_password,
+  reset_password
 } from "../controller/user.controller.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 
@@ -29,7 +28,6 @@ router.post("/playlist/:id", verifyJWT, addToPlaylist);
 router.get("/playlist/:id", verifyJWT, checkBookmarkStatus);
 
 // Email verification
-router.get("/verify/:token", verifyEmail);
 
 // Password reset
 router.post("/forgot-password", forgot_password);
