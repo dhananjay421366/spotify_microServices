@@ -14,19 +14,31 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: true,
-      min: 5,
+      minLength: 5, // better than min:5
     },
     role: {
       type: String,
       default: "user",
     },
-   playList: [
-  {
-    type: String,  
-    default: [],
-  },
-],
-
+    verification_token: {
+      type: String,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    resetPasswordToken: {
+      type: String, // store reset token for password recovery
+    },
+    resetPasswordExpire: {
+      type: Date, // store expiry of reset token
+    },
+    playList: [
+      {
+        type: String,
+        default: [],
+      },
+    ],
   },
   { timestamps: true }
 );

@@ -14,11 +14,13 @@ import { Home } from "./pages/Home";
 import { SpotifyLogin } from "./pages/SpotifyLogin";
 import { SpotifySignup } from "./pages/SpotifySignIn";
 import LinkedInOpenAnimation from "./components/Animation/Animation1";
+import { ResetPassword } from "./components/Resetpassword";
+import { ForgotPassword } from "./components/ForgotPassword";
 
 function App() {
   const { user, setUser } = useAuth();
-  // const server = `https://spotify-user-g9xg.onrender.com`;
-  const server = `http://localhost:8000`;
+  const server = `https://spotify-user-g9xg.onrender.com`;
+  // const server = `http://localhost:8000`;
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -83,6 +85,8 @@ function App() {
       <Route path="/albums" element={<AllAlbum />} />
       <Route path="/artist/:id" element={<ArtistSongs />} />
       <Route path="/animation" element={<LinkedInOpenAnimation />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       {/* Admin protected route */}
       <Route

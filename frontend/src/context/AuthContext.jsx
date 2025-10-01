@@ -13,8 +13,8 @@ import { useNavigate } from "react-router-dom";
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
-// const server = `https://spotify-user-g9xg.onrender.com`;
-const server = `http://localhost:8000`;
+const server = `https://spotify-user-g9xg.onrender.com`;
+// const server = `http://localhost:8000`;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // ✅ Verify logged-in user on refresh
+  //  Verify logged-in user on refresh
   const verifyUser = useCallback(async () => {
     try {
       setLoading(true);
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
     verifyUser();
   }, [verifyUser]);
 
-  // ✅ Register
+  //  Register
   const HandleRegister = useCallback(async (username, email, password) => {
     try {
       setLoading(true);
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // ✅ Login
+  // Login
   const HandleLogin = useCallback(
     async (email, password) => {
       try {
@@ -94,7 +94,7 @@ export const AuthProvider = ({ children }) => {
     [navigate]
   );
 
-  // ✅ Logout
+  //  Logout
   const HandleLogout = useCallback(async () => {
     try {
       setLoading(true);
@@ -128,6 +128,50 @@ export const AuthProvider = ({ children }) => {
     getAllUsers(); // ✅ call on mount
   }, []); // empty dependency = run only once
 
+  // ================= FORGOT PASSWORD =================
+  const HandleForgotPassword = useCallback(async (email) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { data } = await axios.post(
+        `${server}/api/v1/users/forgot-password`,
+        { email },
+        { withCredentials: true }
+      );
+      toast.success(data.message || "Password reset link sent");
+      return data;
+    } catch (err) {
+      setError(err);
+      toast.error(err.response?.data?.error || "Failed to send reset link");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ================= RESET PASSWORD =================
+  const HandleResetPassword = useCallback(
+    async (token, newPassword) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const { data } = await axios.post(
+          `${server}/api/v1/users/reset-password/${token}`,
+          { newPassword },
+          { withCredentials: true }
+        );
+        toast.success(data.message || "Password reset successfully");
+        navigate("/sign-in"); // redirect to login after reset
+        return data;
+      } catch (err) {
+        setError(err);
+        toast.error(err.response?.data?.error || "Failed to reset password");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [navigate]
+  );
+
   // ✅ Memoized context value
   const value = useMemo(
     () => ({
@@ -138,6 +182,8 @@ export const AuthProvider = ({ children }) => {
       error,
       HandleRegister,
       HandleLogin,
+      HandleForgotPassword,
+      HandleResetPassword,
       HandleLogout,
       setLoading,
       verifyUser,
@@ -149,6 +195,8 @@ export const AuthProvider = ({ children }) => {
       error,
       HandleRegister,
       HandleLogin,
+      HandleForgotPassword,
+      HandleResetPassword,
       HandleLogout,
       verifyUser,
     ]
